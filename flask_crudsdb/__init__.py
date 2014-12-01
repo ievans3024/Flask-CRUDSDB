@@ -16,68 +16,6 @@ class Database(object):
     code will be able to interact with the database regardless of what kind of database is being used.
     """
 
-    class Model(object):
-        """
-        A base class for database models.
-
-        This class is a skeleton to model information models from. A database wrapper may subclass this to provide
-        some simple methods for different kinds of information.
-
-        When an information model inherits from this and another class, this class should be to the right of all other
-        inherited classes, e.g:
-            class SomeMultiInheritModel(SomeOtherModel, Model):
-                pass
-        """
-
-        class ModelError(BaseException):
-            """
-            Wrapper class for model-specific errors. Can be subclassed.
-            Purely exists to allow for catching explicitly written model errors (e.g., for data validation) and to
-            create custom exceptions to catch different types of errors (e.g., missing required fields, wrong data
-            type, etc.)
-            """
-            def __init__(self, message, *args, **kwargs):
-                super(BaseException, self).__init__(message)
-
-        def __init__(self, data, *args, **kwargs):
-            """
-            Model Constructor
-            All models should implement this method.
-            This method should raise a Database.Model.ModelError or a subclass of it when data supplied is invalid.
-            Models should have an 'endpoint' property that can be set on init
-            :param data: The data to populate this instance with
-            :type data: collection_json.Template
-            :return:
-            """
-            # TODO: Change this to a pass statement? Print a warning in console?
-            raise NotImplementedError()
-
-        def get_collection_item(self, as_dict=False):
-            """
-            Get a collection_json.Item representation of this model
-            :param as_dict: If true, return a dict-like object instead of a collection_json.Item instance.
-            :return: A collection_json.Item instance by default, a dict-like object if as_dict is true.
-            """
-            raise NotImplementedError()
-
-        @staticmethod
-        def get_template(as_dict=False):
-            """
-            Get an empty collection_json.Template for this model
-            :param as_dict: If true, return a dict-like object instead of a collection_json.Template instance.
-            :return: A collection_json.Template instance by default, a dict-like object if as_dict is true
-            """
-            raise NotImplementedError()
-
-        def update(self, data):
-            """
-            Update this model instance's data
-            :param data: The information to update the model with.
-            :type data: collection_json.Template
-            :return:
-            """
-            raise NotImplementedError()
-
     def __init__(self, app, *args, **kwargs):
         """
         Database Constructor
@@ -164,3 +102,65 @@ class Database(object):
         what happened (including errors.)
         """
         raise NotImplementedError()
+
+
+class Model(object):
+    """
+    A base class for database models.
+
+    This class is a skeleton to model information models from. A database wrapper may subclass this to provide
+    some simple methods for different kinds of information.
+
+    When an information model inherits from this and another class, this class should be to the right of all other
+    inherited classes, e.g:
+        class SomeMultiInheritModel(SomeOtherModel, Model):
+            pass
+    """
+    def __init__(self, data, *args, **kwargs):
+        """
+        Model Constructor
+        All models should implement this method.
+        This method should raise a Database.Model.ModelError or a subclass of it when data supplied is invalid.
+        Models should have an 'endpoint' property that can be set on init
+        :param data: The data to populate this instance with
+        :type data: collection_json.Template
+        :return:
+        """
+        pass
+
+    def get_collection_item(self, as_dict=False):
+        """
+        Get a collection_json.Item representation of this model
+        :param as_dict: If true, return a dict-like object instead of a collection_json.Item instance.
+        :return: A collection_json.Item instance by default, a dict-like object if as_dict is true.
+        """
+        raise NotImplementedError()
+
+    @staticmethod
+    def get_template(as_dict=False):
+        """
+        Get an empty collection_json.Template for this model
+        :param as_dict: If true, return a dict-like object instead of a collection_json.Template instance.
+        :return: A collection_json.Template instance by default, a dict-like object if as_dict is true
+        """
+        raise NotImplementedError()
+
+    def update(self, data):
+        """
+        Update this model instance's data
+        :param data: The information to update the model with.
+        :type data: collection_json.Template
+        :return:
+        """
+        raise NotImplementedError()
+
+        
+class ModelError(BaseException):
+    """
+    Wrapper class for model-specific errors. Can be subclassed.
+    Purely exists to allow for catching explicitly written model errors (e.g., for data validation) and to
+    create custom exceptions to catch different types of errors (e.g., missing required fields, wrong data
+    type, etc.)
+    """
+    def __init__(self, message, *args, **kwargs):
+        super(BaseException, self).__init__(message)
