@@ -12,16 +12,15 @@ class SQLAlchemyDatabase(Database):
     """
 
     def __init__(self, app):
-        self.app = app
+        super(Database, self).__init__(app)
         self.database = SQLAlchemy(app)
-        self.models = {}
 
     def create(self, model, data, **kwargs):
         """
         Create a new instance of a model
         :param model: The model name to create an instance of
         :type model: str
-        :param data: The data to provide to that instance as kwargs, formatted as a Collection+JSON data array
+        :param data: The data to provide to that instance, formatted as a Collection+JSON data array
         :type data: list
         :return: Collection representation of the created resource.
         """
@@ -30,7 +29,7 @@ class SQLAlchemyDatabase(Database):
         except (TypeError, ValueError, IndexError):
             abort(400)
         # letting this raise a KeyError on purpose, flask returns HTTP 500 on python errors
-        instance = self.models[model](**data.to_dict())
+        instance = self.models[model](data)
         self.database.session.add(instance)
         self.database.session.commit()
         return Collection(href=self.app.config.get('API_ROOT'), items=[instance.get_collection_item()])
@@ -75,7 +74,7 @@ class SQLAlchemyDatabase(Database):
 
         # letting self.models[model] raise a KeyError on purpose, see above
         instance = self.models[model].query.get_or_404(id)
-        instance.update(**data.to_dict())
+        instance.update(data)
         self.database.session.commit()
         return Collection(
             href=self.app.config.get('API_ROOT'), template=self.models[model].get_collection_template(),

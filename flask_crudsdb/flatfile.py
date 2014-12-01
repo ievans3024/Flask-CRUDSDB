@@ -50,9 +50,7 @@ class FlatDatabase(Database):
             return default
 
     def __init__(self, app):
-        # Intentionally not calling superclass init
-        self.app = app
-        self.models = {}
+        super(Database, self).__init__(app)
         self.database = {}
         try:
             self.__reload_db_file()
@@ -73,7 +71,7 @@ class FlatDatabase(Database):
             data = Template(data)
         except (TypeError, ValueError, IndexError):
             abort(400)
-        instance = self.models[model](**data.to_dict())
+        instance = self.models[model](data)
         if (self.models.get(model)) and (not self.database.get(model)):
             self.database[model] = self.AutoKeyDict()
         self.database[model]['next'] = instance
@@ -89,7 +87,7 @@ class FlatDatabase(Database):
                 for k, v in self.database[model].items():
                     response.items.append(v.get_collection_item())
             else:
-                instance = self.databse[model].get(id)
+                instance = self.database[model].get(id)
                 if instance:
                     response.items.append(instance.get_collection_item())
                 else:
@@ -108,7 +106,7 @@ class FlatDatabase(Database):
             response.template = self.database[model].get_collection_template()
             if self.database[model].get(id):
                 instance = self.database[model][id]
-                instance.update(**data.to_dict())
+                instance.update(data)
                 self.__write_db_file()
                 response.items.append(instance.get_collection_item())
                 return response
@@ -119,7 +117,7 @@ class FlatDatabase(Database):
 
     def delete(self, model, id=None, *args, **kwargs):
         if self.database.get(model):
-            if self.datbase[model].get(id):
+            if self.database[model].get(id):
                 del self.database[model][id]
                 self.__write_db_file()
             else:

@@ -39,12 +39,15 @@ class Database(object):
             def __init__(self, message, *args, **kwargs):
                 super(BaseException, self).__init__(message)
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, data, *args, **kwargs):
             """
             Model Constructor
             All models should implement this method.
             This method should raise a Database.Model.ModelError or a subclass of it when data supplied is invalid.
             Models should have an 'endpoint' property that can be set on init
+            :param data: The data to populate this instance with
+            :type data: collection_json.Template
+            :return:
             """
             # TODO: Change this to a pass statement? Print a warning in console?
             raise NotImplementedError()
@@ -90,7 +93,8 @@ class Database(object):
         :param kwargs:
         :return:
         """
-        raise NotImplementedError()
+        self.app = app
+        self.models = {}
 
     def add_model(self, model_class):
         """
