@@ -3,7 +3,7 @@ __author__ = 'Ian S. Evans'
 from setuptools import setup, find_packages
 
 setup(
-    name='crud_database',
+    name='Flask-CRUDSDB',
     version='0.0.1',
     packages=find_packages(),
     install_requires=['flask', 'collection_json', 'flask_sqlalchemy'],
