@@ -154,7 +154,7 @@ class Model(object):
         """
         raise NotImplementedError()
 
-        
+
 class ModelError(BaseException):
     """
     Wrapper class for model-specific errors. Can be subclassed.
@@ -163,4 +163,4 @@ class ModelError(BaseException):
     type, etc.)
     """
     def __init__(self, message, *args, **kwargs):
-        super(BaseException, self).__init__(message)
+        super(ModelError, self).__init__(message)
