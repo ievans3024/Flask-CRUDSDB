@@ -34,12 +34,12 @@ class SQLAlchemyDatabase(Database):
         self.database.session.commit()
         return Collection(href=self.app.config.get('API_ROOT'), items=[instance.get_collection_item()])
 
-    def read(self, model, id=None, **kwargs):
+    def read(self, model, pk=None, **kwargs):
         """
         Read the database for a model instance by id.
         :param model: The model name to look for instances of.
         :type model: str
-        :param id: The id/primary key of the model instance to attempt to read.
+        :param pk: The primary key of the model instance to attempt to read.
         :param kwargs:
         :return: Collection representation of resource(s) retrieved from the database.
         """
@@ -47,23 +47,23 @@ class SQLAlchemyDatabase(Database):
         response = Collection(
             href=self.app.config.get('API_ROOT'), template=self.models[model].get_collection_template()
         )
-        if id is None:
+        if pk is None:
             instances = self.models[model].query
             if kwargs.get('order_by'):
                 instances = instances.order_by(kwargs['order_by'])
             for instance in instances:
                 response.items.append(instance.get_collection_item())
         else:
-            instance = self.models[model].query.get_or_404(id)
+            instance = self.models[model].query.get_or_404(pk)
             response.items.append(instance.get_collection_item())
         return response
 
-    def update(self, model, data, id=None, **kwargs):
+    def update(self, model, data, pk=None, **kwargs):
         """
         Update a model instance in the database.
         :param model: The model name to look for an instance of.
         :param data: The data to provide to the instance, formatted as a Collection+JSON data array
-        :param id: The id/primary key of the model instance to modify.
+        :param pk: The primary key of the model instance to modify.
         :param kwargs:
         :return: A Collection+JSON representation of the updated model instance.
         """
@@ -73,7 +73,7 @@ class SQLAlchemyDatabase(Database):
             abort(400)
 
         # letting self.models[model] raise a KeyError on purpose, see above
-        instance = self.models[model].query.get_or_404(id)
+        instance = self.models[model].query.get_or_404(pk)
         instance.update(data)
         self.database.session.commit()
         return Collection(
@@ -81,19 +81,18 @@ class SQLAlchemyDatabase(Database):
             items=[instance.get_collection_item()]
         )
 
-    def delete(self, model, id=None, **kwargs):
+    def delete(self, model, pk=None, **kwargs):
         """
         Delete a model instance from the database by id.
         :param model: The name of the model to delete an instance of.
-        :param id: The id/primary key of the instance to delete.
+        :param pk: The primary key of the instance to delete.
         :param kwargs:
         :return:
         """
         # letting self.models[model] raise a KeyError on purpose, see above
-        instance = self.models[model].query.get_or_404(id)
+        instance = self.models[model].query.get_or_404(pk)
         self.database.session.delete(instance)
         self.database.session.commit()
 
     def search(self, model, data, **kwargs):
-        # requires flask-whooshalchemy, which doesn't support python 3 yet.
         pass
