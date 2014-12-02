@@ -202,7 +202,22 @@ class Model(TypeEnforced, object):
         :type data: collection_json.Template
         :return:
         """
-        raise NotImplementedError()
+        if isinstance(self.__required__, type):
+            required = []
+        else:
+            required = self.__required__
+
+        for attr in required:
+            if not data.data.find(attr):
+                raise ModelError('%s not found in provided data but is a attr attribute.' % attr)
+
+        for prop in data.data:
+            if hasattr(self.__class__, prop.name):
+                setattr(self, prop.name, prop.value)
+            else:
+                print(
+                    'attribute {key} not found in class {type}'.format(key=prop.name, type=self.__class__.__name__)
+                )
 
 
 class ModelError(DatabaseError):
