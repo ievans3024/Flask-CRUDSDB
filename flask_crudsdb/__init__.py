@@ -7,7 +7,28 @@ http://github.com/ievans3024/Flask-CRUDSDB
 from flask import Flask
 
 
-class Database(object):
+class TypeEnforced(object):
+    """
+    Class attributes that are types or tuples of strings will define what types of objects are allowed for instance
+    values. Use a tuple of attribute strings for duck typing.
+    """
+    def __setattr__(self, key, value):
+        if hasattr(self.__class__, key):
+            if isinstance(getattr(self.__class__, key), type):
+                if not isinstance(value, getattr(self.__class__, key)):
+                    raise TypeError(
+                        '{key} must be of type {type}'.format(key=key, type=getattr(self.__class__, key).__name__)
+                    )
+            elif isinstance(getattr(self.__class__, key), tuple):
+                for attr in getattr(self.__class__, key):
+                    if not hasattr(value, attr):
+                        raise TypeError(
+                            '{key} must have attribute {attr}'.format(key=key, attr=attr)
+                        )
+        object.__setattr__(self, key, value)
+
+
+class Database(TypeEnforced, object):
     """
     A base class for database abstraction for ReSTful APIs
 
@@ -16,16 +37,19 @@ class Database(object):
 
     Subclass this class when creating a new wrapper class. Implement the same methods provided here, and the application
     code will be able to interact with the database regardless of what kind of database is being used.
+
+    Properties should be types or a tuple of desired attributes as strings.
     """
 
     app = Flask
-    models = dict
+    models = ("__getitem__", "__setitem__")
+    database = object
 
     def __init__(self, app, *args, **kwargs):
         """
         Database Constructor
         All Databases should implement this method.
-        All Databases should create a property called "models" that is a (or a subclass of) dict object where keys are
+        All Databases should create a property called "models" that is subscriptable object where keys are
         the model name and values are the Model Class, e.g.:
             self.models = {
                 'ModelOne': SomeDatabaseClass.ModelOne,
@@ -36,8 +60,6 @@ class Database(object):
         :param kwargs:
         :return:
         """
-        if not isinstance(app, Database.app):
-            raise DatabaseError('app must be an instance of %s' % Database.app.__name__)
         self.app = app
         self.models = {}
 
@@ -122,7 +144,7 @@ class DatabaseError(BaseException):
         super(DatabaseError, self).__init__(message)
 
 
-class Model(object):
+class Model(TypeEnforced, object):
     """
     A base class for database models.
 
@@ -135,8 +157,8 @@ class Model(object):
             pass
     """
 
-    __required__ = []
-    
+    __required__ = list
+
     def __init__(self, data, *args, **kwargs):
         """
         Model Constructor
