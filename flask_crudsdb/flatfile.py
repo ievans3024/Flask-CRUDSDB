@@ -26,6 +26,9 @@ class FlatDatabase(Database):
         def extend(self, d):
             super().__init__(dict(self.data), **d)
 
+        def get_next(self):
+            return len(sorted(self.data))
+
     class ModelJSONEncoder(json.JSONEncoder):
         def default(self, o, models={}):
             if o.__class__.__name__ in models:
@@ -71,23 +74,24 @@ class FlatDatabase(Database):
             data = Template(data)
         except (TypeError, ValueError, IndexError):
             abort(400)
-        instance = self.models[model](data)
         if (self.models.get(model)) and (not self.database.get(model)):
             self.database[model] = self.AutoKeyDict()
+        pk = self.database[model].get_next()
+        instance = self.models[model](pk, data)
         self.database[model]['next'] = instance
         self.__write_db_file()  # TODO: Thread/Multiprocess this
         response.items.append(instance.get_collection_item())
         return response
 
-    def read(self, model, id=None, *args, **kwargs):
+    def read(self, model, pk=None, *args, **kwargs):
         response = Collection(href=self.app.config.get('API_ROOT'))
         if self.database.get(model):
             response.template = self.models[model].get_collection_template()
-            if id is None:
+            if pk is None:
                 for k, v in self.database[model].items():
                     response.items.append(v.get_collection_item())
             else:
-                instance = self.database[model].get(id)
+                instance = self.database[model].get(pk)
                 if instance:
                     response.items.append(instance.get_collection_item())
                 else:
@@ -96,7 +100,7 @@ class FlatDatabase(Database):
         else:
             abort(404)
 
-    def update(self, model, data, *args, **kwargs):
+    def update(self, model, pk, data, *args, **kwargs):
         response = Collection(href=self.app.config.get('API_ROOT'))
         try:
             data = Template(data)
@@ -104,8 +108,8 @@ class FlatDatabase(Database):
             abort(400)
         if self.database.get(model):
             response.template = self.database[model].get_collection_template()
-            if self.database[model].get(id):
-                instance = self.database[model][id]
+            if self.database[model].get(pk):
+                instance = self.database[model][pk]
                 instance.update(data)
                 self.__write_db_file()
                 response.items.append(instance.get_collection_item())
@@ -115,10 +119,10 @@ class FlatDatabase(Database):
         else:
             abort(404)
 
-    def delete(self, model, id=None, *args, **kwargs):
+    def delete(self, model, pk=None, *args, **kwargs):
         if self.database.get(model):
-            if self.database[model].get(id):
-                del self.database[model][id]
+            if self.database[model].get(pk):
+                del self.database[model][pk]
                 self.__write_db_file()
             else:
                 abort(404)
