@@ -16,13 +16,14 @@ class TypeEnforced(object):
     """
     def __setattr__(self, key, value):
         if hasattr(self.__class__, key):
-            if isinstance(getattr(self.__class__, key), type):
-                if not isinstance(value, getattr(self.__class__, key)):
+            required_type = getattr(self.__class__, key)
+            if isinstance(required_type, type):
+                if not isinstance(value, required_type):
                     raise TypeError(
-                        '{key} must be of type {type}'.format(key=key, type=getattr(self.__class__, key).__name__)
+                        '{key} must be of type {type}'.format(key=key, type=required_type.__name__)
                     )
-            elif isinstance(getattr(self.__class__, key), tuple):
-                for attr in getattr(self.__class__, key):
+            elif isinstance(required_type, tuple):
+                for attr in required_type:
                     if not hasattr(value, attr):
                         raise TypeError(
                             '{key} must have attribute {attr}'.format(key=key, attr=attr)
