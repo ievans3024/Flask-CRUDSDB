@@ -11,24 +11,47 @@ from flask import Flask
 
 class TypeEnforced(object):
     """
-    Class attributes that are types or tuples of strings will define what types of objects are allowed for instance
-    values. Use a tuple of attribute strings for duck typing.
+    If a class attribute is an instance of TypeEnforcer or DuckTypeEnforcer, assigned values for the instance attribute
+    must match the type or attributes specified by the respective enforcer.
     """
     def __setattr__(self, key, value):
         if hasattr(self.__class__, key):
-            required_type = getattr(self.__class__, key)
-            if isinstance(required_type, type):
+            type_enforcer = getattr(self.__class__, key)
+            if isinstance(type_enforcer, TypeEnforcer):
+                required_type = type_enforcer.type
                 if not isinstance(value, required_type):
                     raise TypeError(
                         '{key} must be of type {type}'.format(key=key, type=required_type.__name__)
                     )
-            elif isinstance(required_type, tuple):
-                for attr in required_type:
+            elif isinstance(type_enforcer, DuckTypeEnforcer):
+                for attr in type_enforcer:
                     if not hasattr(value, attr):
                         raise TypeError(
                             '{key} must have attribute {attr}'.format(key=key, attr=attr)
                         )
         object.__setattr__(self, key, value)
+
+
+class DuckTypeEnforcer(tuple):
+    """
+    An immutable iterable of required attributes to pass a duck typing test.
+    Literally, this is a wrapper class that passes init arguments to tuple.
+    """
+    def __new__(cls, *args, **kwargs):
+        return super(DuckTypeEnforcer, cls).__new__(cls, args)
+
+
+class TypeEnforcer(object):
+    """
+    A wrapper class for holding a type.
+    """
+    def __init__(self, cls):
+        if not isinstance(cls, type):
+            raise TypeError('cls must be a type or class')
+        self.type = cls
+
+    def __setattr__(self, key, value):
+        raise NotImplementedError()
 
 
 class Database(TypeEnforced, object):
@@ -43,9 +66,9 @@ class Database(TypeEnforced, object):
     """
 
     # Type enforced attributes
-    app = Flask
-    models = ("__getitem__", "__setitem__")
-    database = object
+    app = TypeEnforcer(Flask)
+    models = DuckTypeEnforcer("__getitem__", "__setitem__")
+    database = TypeEnforcer(object)
 
     def __init__(self, app, *args, **kwargs):
         """
@@ -163,8 +186,8 @@ class Model(TypeEnforced, object):
             pass
     """
 
-    __required__ = list
-    __indexed__ = list
+    __required__ = TypeEnforcer(list)
+    __indexed__ = TypeEnforcer(list)
 
     def __init__(self, data, *args, **kwargs):
         """
@@ -202,7 +225,7 @@ class Model(TypeEnforced, object):
         :type data: collection_json.Template
         :return:
         """
-        if isinstance(self.__required__, type):
+        if isinstance(self.__required__, (TypeEnforcer, DuckTypeEnforcer)):
             required = []
         else:
             required = self.__required__
