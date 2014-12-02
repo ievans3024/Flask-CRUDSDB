@@ -6,7 +6,7 @@ setup(
     name='Flask-CRUDSDB',
     version='0.0.1',
     packages=find_packages(),
-    install_requires=['flask', 'collection_json', 'flask_sqlalchemy'],
+    install_requires=['collection_json', 'flask', 'flask_sqlalchemy', 'whoosh'],
     url='http://github.com/ievans3024/Flask-CRUDSDB',
     license='MIT',
     author='Ian S. Evans',
