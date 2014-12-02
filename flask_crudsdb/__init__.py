@@ -152,6 +152,10 @@ class Model(TypeEnforced, object):
     This class is a skeleton to model information models from. A database wrapper may subclass this to provide
     some simple methods for different kinds of information.
 
+    __required__ attribute is a list of attribute names as strings that are required to successfully instantiate.
+
+    __indexed__ attribute is a list of attribute names as strings that are indexed for searching through whoosh.
+
     When an information model inherits from this and another class, this class should be to the right of all other
     inherited classes, e.g:
         class SomeMultiInheritModel(SomeOtherModel, Model):
@@ -159,6 +163,7 @@ class Model(TypeEnforced, object):
     """
 
     __required__ = list
+    __indexed__ = list
 
     def __init__(self, data, *args, **kwargs):
         """
