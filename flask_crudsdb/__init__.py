@@ -37,10 +37,9 @@ class Database(TypeEnforced, object):
 
     Subclass this class when creating a new wrapper class. Implement the same methods provided here, and the application
     code will be able to interact with the database regardless of what kind of database is being used.
-
-    Properties should be types or a tuple of desired attributes as strings.
     """
 
+    # Type enforced attributes
     app = Flask
     models = ("__getitem__", "__setitem__")
     database = object
