@@ -100,7 +100,7 @@ class FlatDatabase(Database):
         else:
             abort(404)
 
-    def update(self, model, pk, data, *args, **kwargs):
+    def update(self, model, data, *args, pk=None, **kwargs):
         response = Collection(href=self.app.config.get('API_ROOT'))
         try:
             data = Template(data)
