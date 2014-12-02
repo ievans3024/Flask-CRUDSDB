@@ -4,6 +4,8 @@ CRUDS Database abstraction system
 http://github.com/ievans3024/Flask-CRUDSDB
 """
 
+from flask import Flask
+
 
 class Database(object):
     """
@@ -16,12 +18,15 @@ class Database(object):
     code will be able to interact with the database regardless of what kind of database is being used.
     """
 
+    app = Flask
+    models = dict
+
     def __init__(self, app, *args, **kwargs):
         """
         Database Constructor
         All Databases should implement this method.
-        All Databases should create a property called "models" that is a dict-like object where keys are the model name
-        and values are the Model Class, e.g.:
+        All Databases should create a property called "models" that is a (or a subclass of) dict object where keys are
+        the model name and values are the Model Class, e.g.:
             self.models = {
                 'ModelOne': SomeDatabaseClass.ModelOne,
                 'ModelTwo': SomeDatabaseClass.ModelTwo
@@ -31,6 +36,8 @@ class Database(object):
         :param kwargs:
         :return:
         """
+        if not isinstance(app, Database.app):
+            raise DatabaseError('app must be an instance of %s' % Database.app.__name__)
         self.app = app
         self.models = {}
 
@@ -39,10 +46,10 @@ class Database(object):
         Add a model class to the instance models.
         :param model_class: The model class to add
         :type model_class: database.Database.Model
-        :raises TypeError: If model_class is not a subclass of flask_crudsdb.Database.Model
+        :raises TypeError: If model_class is not a subclass of flask_crudsdb.Model
         :return:
         """
-        if issubclass(model_class, Database.Model):
+        if issubclass(model_class, Model):
             try:
                 self.models[model_class.__name__] = model_class
             except (AttributeError, TypeError):
@@ -50,7 +57,7 @@ class Database(object):
                     self.__class__.__name__ + ' does not have a "models" attribute or it is not subscriptable.'
                 )
         else:
-            raise TypeError('model_class must be a subclass of flask_crudsdb.Database.Model')
+            raise TypeError('model_class must be a subclass of %s' % Model.__name__)
 
     def create(self, model, data, *args, **kwargs):
         """
@@ -77,7 +84,7 @@ class Database(object):
         """
         Update information for an existing model instance.
         Please note that server-side data validation should happen in the model's init method somewhere.
-        This method should capture instances of Database.Model.ModelError and return a Collection containing the
+        This method should capture instances of ModelError and return a Collection containing the
         appropriate error information.
         :param model: The model to update the information for.
         :param data: The data to parse into the model. Should accept partial data and overlay it on existing data.
@@ -104,6 +111,17 @@ class Database(object):
         raise NotImplementedError()
 
 
+class DatabaseError(BaseException):
+    """
+    Wrapper class for database-specific errors. Can be subclassed.
+    Purely exists to allow for catching explicitly written database errors (e.g., for data validation) and to
+    create custom exceptions to catch different types of errors (e.g., missing required fields, wrong data
+    type, etc.)
+    """
+    def __init__(self, message, *args, **kwargs):
+        super(DatabaseError, self).__init__(message)
+
+
 class Model(object):
     """
     A base class for database models.
@@ -116,11 +134,14 @@ class Model(object):
         class SomeMultiInheritModel(SomeOtherModel, Model):
             pass
     """
+
+    __required__ = []
+    
     def __init__(self, data, *args, **kwargs):
         """
         Model Constructor
         All models should implement this method.
-        This method should raise a Database.Model.ModelError or a subclass of it when data supplied is invalid.
+        This method should raise a ModelError or a subclass of it when data supplied is invalid.
         Models should have an 'endpoint' property that can be set on init
         :param data: The data to populate this instance with
         :type data: collection_json.Template
@@ -155,7 +176,7 @@ class Model(object):
         raise NotImplementedError()
 
 
-class ModelError(BaseException):
+class ModelError(DatabaseError):
     """
     Wrapper class for model-specific errors. Can be subclassed.
     Purely exists to allow for catching explicitly written model errors (e.g., for data validation) and to
