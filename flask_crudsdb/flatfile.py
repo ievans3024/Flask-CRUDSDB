@@ -50,7 +50,7 @@ class FlatDatabase(Database):
             return default
 
     def __init__(self, app):
-        super(Database, self).__init__(app)
+        super(FlatDatabase, self).__init__(app)
         self.database = {}
         try:
             self.__reload_db_file()
