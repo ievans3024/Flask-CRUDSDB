@@ -5,6 +5,8 @@ http://github.com/ievans3024/Flask-CRUDSDB
 """
 
 from flask import Flask
+# TODO: Implement whoosh for search support
+# TODO: Implement celery to schedule whoosh indexing
 
 
 class TypeEnforced(object):
