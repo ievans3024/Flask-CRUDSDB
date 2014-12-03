@@ -32,7 +32,7 @@ class FlatDatabase(Database):
     class ModelJSONEncoder(json.JSONEncoder):
         def default(self, o, models={}):
             if o.__class__.__name__ in models:
-                d = o.get_collection_item.to_dict()
+                d = o.get_collection_item().to_dict()
                 d['__class__'] = o.__class__.__name__
                 return d
             elif isinstance(o, FlatDatabase.AutoKeyDict):
