@@ -5,6 +5,8 @@ from flask_crudsdb import Database
 from flask import abort
 from flask_sqlalchemy import SQLAlchemy
 
+# TODO: Convert this to pure sqlalchemy
+
 
 class SQLAlchemyDatabase(Database):
     """
