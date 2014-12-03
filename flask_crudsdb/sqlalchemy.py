@@ -4,8 +4,15 @@ from collection_json import Collection, Template
 from flask_crudsdb import Database
 from flask import abort
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import create_engine, BigInteger, Binary, Boolean, Column, Constraint, Date, DateTime, Enum, Float, \
+    ForeignKey, ForeignKeyConstraint, Index, Integer, Interval, LargeBinary, Numeric, PrimaryKeyConstraint, Sequence, \
+    String, Table, Text, Time, Unicode, UnicodeText, UniqueConstraint
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 # TODO: Convert this to pure sqlalchemy
+
+SQLAlchemyModel = declarative_base()
 
 
 class SQLAlchemyDatabase(Database):
@@ -15,7 +22,7 @@ class SQLAlchemyDatabase(Database):
 
     def __init__(self, app):
         super(Database, self).__init__(app)
-        self.database = SQLAlchemy(app)
+        self.database = create_engine(app.config.get('SQLALCHEMY_DATABASE_URI'))
 
     def create(self, model, data, **kwargs):
         """
@@ -32,8 +39,9 @@ class SQLAlchemyDatabase(Database):
             abort(400)
         # letting this raise a KeyError on purpose, flask returns HTTP 500 on python errors
         instance = self.models[model](data)
-        self.database.session.add(instance)
-        self.database.session.commit()
+        session = sessionmaker(bind=self.database)
+        session.add(instance)
+        session.commit()
         return Collection(href=self.app.config.get('API_ROOT'), items=[instance.get_collection_item()])
 
     def read(self, model, pk=None, **kwargs):
@@ -49,14 +57,16 @@ class SQLAlchemyDatabase(Database):
         response = Collection(
             href=self.app.config.get('API_ROOT'), template=self.models[model].get_collection_template()
         )
+        session = sessionmaker(bind=self.database)
         if pk is None:
-            instances = self.models[model].query
+            instances = session.query(self.models[model])
             if kwargs.get('order_by'):
-                instances = instances.order_by(kwargs['order_by'])
-            for instance in instances:
-                response.items.append(instance.get_collection_item())
+                instances = instances.order_by(getattr(self.models[model], kwargs['order_by']))
         else:
-            instance = self.models[model].query.get_or_404(pk)
+            instances = session.query(self.models[model]).get(pk)
+            if instances is None:
+                abort(404)
+        for instance in instances:
             response.items.append(instance.get_collection_item())
         return response
 
